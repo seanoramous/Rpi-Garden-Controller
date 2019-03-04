@@ -76,7 +76,7 @@ class TimeMonitor:
         global cycle
         global inRunHours
         global lightState
-        time.sleep(30) #Five second delay
+        time.sleep(5) #Five second delay
         cycle = cycle + 5.0
         while self._running:        
             self.localTime = time.localtime(time.time())
@@ -89,6 +89,8 @@ class TimeMonitor:
                     lightState ^= True
                     time.sleep(2)
                     loginfo("It's dark - turn on the lights")
+                else:
+                    loginfo("It's dark and the lights are already on")
                     
             else:
                 inRunHours = False
@@ -97,10 +99,12 @@ class TimeMonitor:
                     lightState ^= True
                     time.sleep(2)
                     loginfo("It's light outside - turn off some lights")
+                else:
+                    loginfo("It's light outside and the lights are already off")
                     
                                  
-            time.sleep(15 * 60) #Five second delay
-            loginfo( "15 * 60 second Thread cycle+1.0 - ", cycle) 
+            time.sleep(15) #Five second delay
+            loginfo( "15 second Thread cycle+1.0 - ", cycle) 
             
 
 def serial_ports():

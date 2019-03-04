@@ -1,11 +1,13 @@
 #include <Adafruit_CircuitPlayground.h>
 
 #define DELAY_AMOUNT 100
-#define MEASURE_EVERY 600
+//#define MEASURE_EVERY 15000
 
 int value, loopcounter, r, g, b;
-bool light;
+int light = 0;
 float tempF;
+int lasttimeChecked = 0;
+int delayTime = 60000;
 
 void setup() {
   // put your setup code here, to run once:
@@ -16,33 +18,37 @@ void setup() {
   Serial.begin(57600);
   //Serial.println("Circuit Playground test!");
   loopcounter = 1;
-  light = false;
+  light = 0;
   CircuitPlayground.begin();
 }
 
 void loop() {
   String input;
-  int inputVal;
+  int inputVal, slideState;
+  float soundPressureLevel;
   // put your main code here, to run repeatedly:
-
-  if(loopcounter == MEASURE_EVERY){
+  unsigned long curTime = millis();
+  
+  if(curTime > (lasttimeChecked + delayTime)){
     digitalWrite(13, HIGH);
-    if(light){
-      value = CircuitPlayground.lightSensor();
-      Serial.print("Light Sensor: ");
-      Serial.println(value);
-    }
-    //delay(2500);
+
+    value = CircuitPlayground.lightSensor();
+    //Serial.print("Light Sensor: ");
+    //Serial.println(value);
+
+
       /************* TEST SLIDE SWITCH */
-    if (CircuitPlayground.slideSwitch()) {
-      Serial.println("Slide to the left");
+      slideState = CircuitPlayground.slideSwitch();
+    if (slideState) {
+      //Serial.println("Slide to the left");
     } else {
-      Serial.println("Slide to the right");
+      //Serial.println("Slide to the right");
       CircuitPlayground.playTone(500 + 5 * 500, 40);
     }
       /************* TEST SOUND SENSOR */
-    Serial.print("Sound sensor: ");
-    Serial.println(CircuitPlayground.mic.soundPressureLevel(10));
+    //Serial.print("Sound sensor: ");
+    soundPressureLevel = CircuitPlayground.mic.soundPressureLevel(10);
+    //Serial.println(soundPressureLevel);
   
     /************* TEST ACCEL */
     // Display the results (acceleration is measured in m/s*s)
@@ -53,10 +59,10 @@ void loop() {
  
     //Serial.print("Capsense #3: "); 
     //Serial.println(CircuitPlayground.readCap(3,100));
-    //if(!light){
+
     tempF = CircuitPlayground.temperatureF();
-    Serial.print("tempF: ");
-    Serial.println(tempF);
+    //Serial.print("tempF: ");
+    //Serial.println(tempF);
     if(tempF < 60.0){
       r = 0;
       g = 0;
@@ -73,13 +79,13 @@ void loop() {
     for( int j = 0; j < 10; j++) {
       CircuitPlayground.setPixelColor(j, r, g, b);
     }
-    //}
 
+    serialTransfer(tempF, soundPressureLevel, value, slideState, light);
+    
     digitalWrite(13, LOW);
-    //delay(DELAY_AMOUNT);
 
-    loopcounter = 0;
-    //light ^= true;
+    lasttimeChecked = curTime;
+
   }
 
   if (Serial.available() > 0){
@@ -90,87 +96,5 @@ void loop() {
   }
 
   loopcounter++;
-  delay(DELAY_AMOUNT);
-}
-
-int getIntVal(String strVal){
-  int myVal;
-  if(strVal == "0"){
-    myVal = 0;
-  } else if(strVal == "1") {
-    myVal = 1;
-  } else if(strVal == "2") {
-    myVal = 2;
-  } else if(strVal == "3") {
-    myVal = 3;
-  } else if(strVal == "4") {
-    myVal = 4;
-  } else if(strVal == "5") {
-    myVal = 5;
-  } else if(strVal == "6") {
-    myVal = 6;
-  } else if(strVal == "7") {
-    myVal = 7;
-  } else if(strVal == "8") {
-    myVal = 8;
-  } else if(strVal == "9") {
-    myVal = 9;
-  }
-  return myVal;
-}
-
-
-void flash(int repetitions){
-  bool initLight;
-  initLight = light;
-  
-  if(repetitions > 9){
-    repetitions = repetitions / 10;
-  }
-  //Serial.println(repetitions);
-  if(repetitions < 4){
-    for (int i = 0; i < repetitions; i ++){
-      CircuitPlayground.setPixelColor(3, CircuitPlayground.colorWheel(25 * 3));
-      delay(1000);
-      CircuitPlayground.clearPixels();
-      delay(500);
-    }
-  } else {
-    if(repetitions == 4){
-      //CircuitPlayground.setPixelColor(6, 0, 0, 255);
-      //CircuitPlayground.setPixelColor(7, 0, 0, 255);
-      //CircuitPlayground.setPixelColor(8, 0, 0, 255);
-    } else if(repetitions == 5){
-      //CircuitPlayground.setPixelColor(6, 0, 255, 0);
-      //CircuitPlayground.setPixelColor(7, 0, 255, 0);
-      //CircuitPlayground.setPixelColor(8, 0, 255, 0);
-    } else if(repetitions == 6){
-      //CircuitPlayground.setPixelColor(6, 255, 0, 0);
-      //CircuitPlayground.setPixelColor(7, 255, 0, 0);
-      //CircuitPlayground.setPixelColor(8, 255, 0, 0);
-    } else if(repetitions == 7){
-      r = rand() % 256;
-      g = rand() % 256;
-      b = rand() % 256;
-      //for( int j = 0; j < 10; j++) {
-        //CircuitPlayground.setPixelColor(j, r, g, b);
-      //}
-      digitalWrite(12, HIGH);
-      digitalWrite(13, HIGH);
-      light = true;
-      
-    } else if(repetitions == 8){
-      digitalWrite(12, LOW);
-      digitalWrite(13, LOW);
-      light = false;
-    } else {
-      
-      CircuitPlayground.clearPixels();
-    }
-    if(initLight != light){
-      //Serial.println("One hour delay");
-      //delay(500 * 1 * 1);
-      //delay(1000 * 3600);
-    }
-  }
+  //delay(DELAY_AMOUNT);
 }
